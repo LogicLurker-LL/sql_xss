@@ -25,7 +25,7 @@ def parse_args():
 
 
 def call_api(target, params):
-    endpoint = "https://api.logiclurker.local/scan"  # Placeholder
+    endpoint = "http://127.0.0.1:8000/know_my_vulnerabilities/"  # Placeholder
     payload = {"target": target, **params}
     try:
         response = requests.post(endpoint, json=payload)
@@ -66,6 +66,8 @@ def main():
     for target in targets:
         print(f"[>] Launching scan on {target}...")
         call_api(target, param_dict)
+    
+    return 0
 
 
 if __name__ == '__main__':

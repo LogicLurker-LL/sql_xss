@@ -6,9 +6,9 @@ class Target:
         if not self._is_valid_url(url):
             raise ValueError("Invalid URL")
         self.url = url
-        self.subSites = set()
-        self.injectionPoints = set()
-        self.responseSpace = set()
+        self.subSites = list()
+        self.injectionPoints = list
+        self.responseSpace = list()
 
     def _is_valid_url(self, url):
         try:

@@ -1,44 +1,77 @@
-# given api endpoint and parameters fuzz the endpoint with the given parameters with fuzzing wordlist and return the responses 
-
-import requests
-
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, parse_qsl
+import aiohttp
+import asyncio
 
 class Fuzzer:
     def __init__(self, fuzzing_wordlist):
         self.fuzzing_wordlist = fuzzing_wordlist
         self.requests_responses = []
 
-    def fuzz(self, injection_points):
-        for point in injection_points:
-            url = point['url']
-            parameter = point['parameter']
-            for word in self.fuzzing_wordlist:
-                payload = {parameter: word}
-                try:
-                    response = requests.post(url, data=payload)
-                    self.requests_responses.append({
-                      "request": {
-                            "endpoint": url,
-                            "body": payload
-                            },
-                        "response": {
-                            "status": response.status_code,
-                            "content": response.text
-                            },
-                    })
-                    print(f"Fuzzed {url} with {payload} - Status Code: {response.status_code}")
-                except requests.RequestException as e:
-                    print(f"Failed to fuzz {url} with {payload}: {e}")
+    async def fuzz(self, injection_points):
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for req in injection_points:
+                for payload in self.fuzzing_wordlist:
+                    tasks.extend([
+                        self.fuzz_url(session, req, payload),
+                        self.fuzz_headers(session, req, payload),
+                        self.fuzz_body(session, req, payload)
+                    ])
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            self.requests_responses.extend([r for r in results if r])
 
-    def get_requests_responses(self):
-        return self.requests_responses
+    async def fuzz_url(self, session, req, payload):
+        mutated = req.copy()
+        parsed_url = urlparse(mutated['url'])
+        query = parse_qsl(parsed_url.query)
+        if not query:
+            return None
+        fuzzed_query = [(k, payload) for k, _ in query]
+        new_query = urlencode(fuzzed_query)
+        mutated['url'] = urlunparse(parsed_url._replace(query=new_query))
+        return await self.send(session, mutated, 'url', payload)
 
+    async def fuzz_headers(self, session, req, payload):
+        mutated = req.copy()
+        mutated['headers'] = mutated.get('headers', {}).copy()
+        changed = False
+        for h in ['Referer', 'Origin', 'X-Forwarded-For', 'Cookie']:
+            if h in mutated['headers']:
+                mutated['headers'][h] = payload
+                changed = True
+        if not changed:
+            return None
+        return await self.send(session, mutated, 'header', payload)
 
-# injection_points = [{'url': 'http://eu.httpbin.org/forms/post', 'parameter': 'custname', 'type': None}]
-# sqli_wordlist = open('wordlists/Generic-SQLi.txt').read().splitlines()
-# xss_wordlist = open('wordlists/XSS-Fuzzing.txt').read().splitlines()
-# fuzzing_wordlist = sqli_wordlist + xss_wordlist
-# fuzzing_wordlist = ['or 0=0 #"', '"><script>alert(1)</script>', '"><img src=x onerror=alert(1)>', '"><svg/onload=alert(1)>', '"><iframe src=x onerror=alert(1)>', '"><body onload=alert(1)>']
-# fuzzer = Fuzzer(fuzzing_wordlist)
-# fuzzer.fuzz(injection_points)
-# print(fuzzer.get_requests_responses())
+    async def fuzz_body(self, session, req, payload):
+        mutated = req.copy()
+        body = mutated.get('body', '')
+        if body and isinstance(body, str) and '=' in body:
+            try:
+                parsed_body = parse_qsl(body)
+                fuzzed_body = urlencode([(k, payload) for k, _ in parsed_body])
+                mutated['body'] = fuzzed_body
+                return await self.send(session, mutated, 'body', payload)
+            except:
+                return None
+        return None
+
+    async def send(self, session, req, mutation_type, payload):
+        try:
+            async with session.request(
+                method=req['method'],
+                url=req['url'],
+                headers=req.get('headers', {}),
+                data=req.get('body', None),
+                timeout=5
+            ) as resp:
+                content = await resp.text()
+                return {
+                    'mutation_type': mutation_type,
+                    'payload': payload,
+                    'request': req,
+                    'response_status': resp.status,
+                    'response_body': content[:1000]  # trim to avoid huge output
+                }
+        except:
+            return None
