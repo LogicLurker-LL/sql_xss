@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logic Lurker: Vulnerability Scanner</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.4/babel.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .input-focus:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      outline: none;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+      transform: translateY(-2px);
+    }
+    .report-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .report-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const App = () => {
+      const [url, setUrl] = useState('');
+      const [outputFormat, setOutputFormat] = useState('json');
+      const [isLoading, setIsLoading] = useState(false);
+      const [report, setReport] = useState(null);
+      const [error, setError] = useState(null);
+      const [downloadUrl, setDownloadUrl] = useState(null);
+
+      const scanUrl = async () => {
+        setIsLoading(true);
+        setError(null);
+        setReport(null);
+        setDownloadUrl(null);
+        try {
+          const response = await fetch('http://localhost:5000/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, format: outputFormat }),
+          });
+
+          if (!response.ok) throw new Error('Scan failed');
+
+          if (outputFormat === 'json') {
+            const data = await response.json();
+            setReport(data.vulnerabilities || []);
+          } else {
+            const blob = await response.blob();
+            const fileUrl = URL.createObjectURL(blob);
+            setDownloadUrl(fileUrl);
+          }
+        } catch (err) {
+          setError(`Failed to scan URL: ${err.message}`);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const handleDownload = () => {
+        if (outputFormat === 'json' && report) {
+          const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(report, null, 2));
+          const link = document.createElement('a');
+          link.setAttribute('href', dataStr);
+          link.setAttribute('download', 'vulnerability_report.json');
+          link.click();
+        } else if (downloadUrl) {
+          const link = document.createElement('a');
+          link.setAttribute('href', downloadUrl);
+          link.setAttribute('download', `vulnerability_report.${outputFormat}`);
+          link.click();
+        }
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!url) {
+          setError('Please enter a valid URL');
+          return;
+        }
+        scanUrl();
+      };
+
+      useEffect(() => {
+        return () => downloadUrl && URL.revokeObjectURL(downloadUrl);
+      }, [downloadUrl]);
+
+      return (
+        <div className="w-full max-w-4xl glass-effect rounded-xl p-8">
+          <h1 className="text-3xl font-bold text-center mb-6 text-blue-400">Logic Lurker: Vulnerability Scanner</h1>
+          
+          <div className="bg-gray-800/50 p-6 rounded-lg mb-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-gray-300">Target URL</label>
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="w-full p-3 rounded-lg bg-gray-900 text-white border border-gray-700 input-focus"
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2 text-gray-300">Output Format</label>
+              <select
+                value={outputFormat}
+                onChange={(e) => setOutputFormat(e.target.value)}
+                className="w-full p-3 rounded-lg bg-gray-900 text-white border border-gray-700 input-focus"
+              >
+                <option value="json">JSON</option>
+                <option value="pdf">PDF</option>
+                <option value="text">Text</option>
+              </select>
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="w-full p-3 rounded-lg btn-primary text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Scanning...' : 'Scan for Vulnerabilities'}
+            </button>
+          </div>
+
+          {error && (
+            <div className="bg-red-900/50 p-4 rounded-lg mb-6 text-red-300">
+              {error}
+            </div>
+          )}
+
+          {report && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-gray-200">Scan Results</h2>
+                <button
+                  onClick={handleDownload}
+                  disabled={!report && !downloadUrl}
+                  className="p-2 bg-green-600 rounded-lg text-white font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Download Report
+                </button>
+              </div>
+              {report.length === 0 && !downloadUrl ? (
+                <p className="text-gray-400 text-center">No vulnerabilities found!</p>
+              ) : (
+                report.length > 0 ? (
+                  report.map((vuln, index) => (
+                    <div key={index} className="report-card bg-gray-800/50 p-6 rounded-lg">
+                      <h3 className="text-xl font-semibold text-blue-300">{vuln.type}</h3>
+                      <p className="mt-2 text-gray-400"><span className="font-medium text-gray-300">Location:</span> {vuln.location}</p>
+                      <p className="mt-2 text-gray-400"><span className="font-medium text-gray-300">Reason:</span> {vuln.reason}</p>
+                      <div className="mt-3">
+                        <p className="font-medium text-gray-300">Mitigation Steps:</p>
+                        <ul className="list-disc pl-5 mt-2 text-gray-400">
+                          {vuln.mitigation.map((step, i) => <li key={i}>{step}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-center">Report ready for download in {outputFormat} format</p>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
