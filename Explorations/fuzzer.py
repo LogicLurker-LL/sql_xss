@@ -69,9 +69,10 @@ class Fuzzer:
                 return {
                     'mutation_type': mutation_type,
                     'payload': payload,
-                    'request': req,
+                    'response_header': dict(resp.headers),
                     'response_status': resp.status,
-                    'response_body': content[:1000]  # trim to avoid huge output
+                    'response_body': content[:5000]  # trim to avoid huge output
+                    
                 }
         except:
             return None
