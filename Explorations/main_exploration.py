@@ -63,7 +63,7 @@ class MainExploration:
         print("FUZZING INJECTION POINTS")
         fuzzer = Fuzzer(fuzzing_wordlist)
         # fuzzer.fuzz(injection_points)
-        fuzzer.fuzz(target.injectionPoints)
+        await fuzzer.fuzz(target.injectionPoints)
         target.responseSpace = fuzzer.requests_responses
 
 
