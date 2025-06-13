@@ -11,6 +11,7 @@ class Scraper:
     def __init__(self, pages:list):
         self.pages = pages
         self.injection_points = list()
+        self.allowed_domains = [urlparse(page).netloc for page in pages]
 
     async def crawl_page(self, page):
         collected_requests = []
@@ -55,6 +56,11 @@ class Scraper:
         sound_requests = []
         interesting_headers = ['Referer', 'Origin', 'X-Forwarded-For', 'Cookie']
         for req in requests:
+            url = req['url']
+            netloc = urlparse(url).netloc
+            # Filter by allowed domains, allowing subdomains
+            if self.allowed_domains and not any(netloc.endswith(allowed_domain) for allowed_domain in self.allowed_domains):
+                continue
             has_url_params = bool(parse_qs(urlparse(req['url']).query))
             has_headers = any(h in req.get('headers', {}) for h in interesting_headers)
             has_body = bool(req.get('body'))
