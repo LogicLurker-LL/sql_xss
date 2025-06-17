@@ -1,5 +1,6 @@
 from typing import Optional
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from backend.Explorations.main_exploration import MainExploration
 app = FastAPI()
@@ -25,4 +26,11 @@ async def know_my_vulnerabilities(request: ScanRequest):
     # Call the main_exploration function with the provided parameters
     exp = MainExploration(request.target, request.username, request.password, request.cookie, request.token, request.output)
     result = await exp.run()
-    return {"result": result}
+    return StreamingResponse(
+        iter([result]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "inline; filename=analysis_report.pdf",
+            "Content-Length": str(len(result))
+        }
+    )

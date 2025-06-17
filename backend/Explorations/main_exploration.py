@@ -1,6 +1,9 @@
 import asyncio
+import json
 import os
 import requests
+from LogicLurker.sqli_xss.backend.Contemplation.report_generator import ReportGenerator
+
 from backend.Explorations.fuzzer import Fuzzer
 from backend.Explorations.scraper import Scraper
 from backend.Explorations.target import Target
@@ -52,13 +55,12 @@ class MainExploration:
         # initialize scraper object
         print(target.subSites)
         print("SCRAPING PAGES")
-        scraper = Scraper(target.subSites)
+        scraper = Scraper(target.subSites + [target.url])
         # injection points
         
         await scraper.crawl_and_extract()
         target.injectionPoints = scraper.injection_points
 
-        print(target.injectionPoints)
 
         print("FUZZING INJECTION POINTS")
         fuzzer = Fuzzer(fuzzing_wordlist)
@@ -66,16 +68,25 @@ class MainExploration:
         await fuzzer.fuzz(target.injectionPoints)
         target.responseSpace = fuzzer.requests_responses
 
+        # print(target.responseSpace)
+        # with open("requests_responses.json", "w") as f:
+        #     json.dump(fuzzer.requests_responses, f, indent=2)
+        print("ANALYZING RESPONSES")
+        print("GENERATING REPORT")
 
         ##### use requests_responses to identify vulnerabilities
         
-        # LNN
+        # load LNN model
+        model = ...
+        report_generator = ReportGenerator(model)
+        report_generator.generate_report(target.responseSpace)
         
         ##### based on the LNN's result generate report
         
         # report generation
+        result = report_generator.generate_pdf_report() 
 
-        return ...
+        return result
     
 
 # async def main():

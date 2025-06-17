@@ -68,11 +68,11 @@ class Fuzzer:
                 content = await resp.text()
                 return {
                     'mutation_type': mutation_type,
+                    'request_method': req['method'],
                     'payload': payload,
                     'response_header': dict(resp.headers),
                     'response_status': resp.status,
-                    'response_body': content[:5000]  # trim to avoid huge output
-                    
+                    'response_body': content[:5000]  # trim to avoid huge output 
                 }
         except:
             return None

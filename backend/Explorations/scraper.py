@@ -60,6 +60,7 @@ class Scraper:
             netloc = urlparse(url).netloc
             # Filter by allowed domains, allowing subdomains
             if self.allowed_domains and not any(netloc.endswith(allowed_domain) for allowed_domain in self.allowed_domains):
+                # print(f"[!] Blocking request to disallowed domain: {netloc}")
                 continue
             has_url_params = bool(parse_qs(urlparse(req['url']).query))
             has_headers = any(h in req.get('headers', {}) for h in interesting_headers)
@@ -76,13 +77,13 @@ class Scraper:
             self.injection_points.extend(sound_requests)
 
 
-# async def main():
-#     pages = ['https://www.httpbin.org']
-#     scraper = Scraper(pages)
-#     await scraper.crawl_and_extract()
-#     for point in scraper.injection_points:
-#         print(point)
-#         print("----")
-# if __name__ == "__main__":
-#     import asyncio
-#     asyncio.run(main())
+async def main():
+    pages = ['https://eu.httpbin.org', 'https://beta.httpbin.org', 'https://www.httpbin.org', 'https://httpbin.org/forms/post']
+    scraper = Scraper(pages)
+    await scraper.crawl_and_extract()
+    for point in scraper.injection_points:
+        print(point)
+        print("----")
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
